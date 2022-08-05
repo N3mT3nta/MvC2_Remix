@@ -22,7 +22,6 @@ afspacker_path = 'bin\\AFSPacker.exe'
 piso_args = ffmpeg_args = mkisofs_args = afspacker_args = ''
 
 verbose = False
-add_dummy = True
 clean = True
 
 if verbose == False:
@@ -87,14 +86,6 @@ os.system(f'{afspacker_path} -c {adx_folder_modified} AFS00.AFS{afspacker_args}'
 
 print('Moving file to game directory...')
 move('AFS00.AFS', './MvC2/PS2/AFS00.AFS')
-
-if add_dummy:
-    print('Adding dummy file...')
-    try:
-        copyfile('bin\\DUMMY', 'MvC2\\DUMMY')
-    except FileNotFoundError():
-        print('Dummy file not found. Aborting...')
-        quit()
 
 print('Reconstructing ISO...')
 os.system(
