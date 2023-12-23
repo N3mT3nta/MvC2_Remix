@@ -15,9 +15,17 @@ for folder in folders:
         print(f'{folder} not detected. Creating...')
         os.mkdir(folder)
 
+widescreen_patches = (
+('06AB0046820B0046803F023C00688244', '06AB0046820B0046AA3F023C00688244'),
+('38008EE40800E0033C0083AC0000000000000000A0FFBD27', '38008EE43C0083AC403F033C0800E003000083ACA0FFBD27'),
+('82300246AA3F033C', '82300246E33F023C')
+)
+
 piso_path = 'bin\\piso\\piso.exe'
 ffmpeg_path = 'bin\\ffmpeg.exe'
 afspacker_path = 'bin\\AFSPacker.exe'
+palmod_path = 'bin\\PalMod\\PalMod.exe'
+iso_path = 'MvC2.iso'
 
 piso_args = ffmpeg_args = mkisofs_args = afspacker_args = ''
 
@@ -44,10 +52,34 @@ def clean_env():
     rmtree(adx_folder_default)
     rmtree(adx_folder_modified)
     rmtree('MvC2/')
+    os.remove('MvC2_widescreen.iso')
 
+if len(os.listdir(musics_folder)) == 0:
+    print('ERROR: musics folder is empty. Aborting...')
+    quit()
 
+if input('Apply widescreen patch? [y/N]: ') in 'Yy':
+    with open(iso_path, 'rb') as file:
+        print('Reading file...')
+        file_hex = file.read().hex()
+    valid = True
+    for patch in widescreen_patches:
+        if not patch[0] in file_hex:
+            print('HEX value does not match, skipping...')
+            break
+            valid = False
+    if valid:
+        with open('MvC2_widescreen.iso', 'wb') as file:
+            print('Patching...')
+            for patch in widescreen_patches:
+                patched_file_hex = file_hex.replace(patch[0], patch[1])
+            print('Writing file...')
+            file.write(bytes.fromhex(patched_file_hex))
+            rename('MvC2.iso', 'MvC2_original.iso')
+            iso_path = 'MvC2_widescreen.iso'
+    
 print('Extracting ISO...')
-os.system(f'{piso_path} -y extract MvC2.iso / -od MvC2{piso_args}')
+os.system(f'{piso_path} -y extract {iso_path} / -od MvC2{piso_args}')
 
 print('Getting default audio files...')
 os.system(
@@ -76,7 +108,7 @@ for music in os.listdir(musics_folder):
         f'{ffmpeg_path}{ffmpeg_args} -stats -y -i {music_path} -ab 432k -ar 48000 {music_converted_path}'
     )
 
-print('Filling unchanged audio files...')
+print('Filling folder with default audio files...')
 for music in os.listdir(musics_folder):
     music_path = musics_folder + music
     copyfile(music_path, adx_folder_default + music)
